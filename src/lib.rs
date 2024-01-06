@@ -35,7 +35,6 @@ impl<T,O> ArcSyncFn<T,O> {
         *mg = f;
     }
     pub fn run( &self, a: T ) -> O {
-        println!("{}",self.v.is_poisoned());
         let mut f = self.v.lock().unwrap();
         (f)(a)
     }
@@ -59,7 +58,6 @@ impl<T,O> ArcAsyncFn<T,O> {
         *mg = f;
     }
     pub fn run( &self, a: T ) -> BoxFuture<'static,O> {
-        println!("{}",self.v.is_poisoned());
         let mut f = self.v.lock().unwrap();
         (f)(a)
     }
