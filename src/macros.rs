@@ -1,4 +1,3 @@
-#[macro_export]
 macro_rules! sync_fn {
     ($cb:ident) => {
         Box::new($cb)
@@ -11,7 +10,6 @@ macro_rules! sync_fn {
     };
 }
 
-#[macro_export]
 macro_rules! arc_sync_fn {
     ($cb:ident) => {
         $crate::ArcSyncFn::new($crate::sync_fn!($cb))
@@ -24,7 +22,6 @@ macro_rules! arc_sync_fn {
     };
 }
 
-#[macro_export]
 macro_rules! async_fn {
     ($cb:ident) => {
         Box::new($cb)
@@ -43,7 +40,6 @@ macro_rules! async_fn {
     };
 }
 
-#[macro_export]
 macro_rules! arc_async_fn {
     ($cb:ident) => {
         $crate::ArcAsyncFn::new( $crate::async_fn!($cb) )
@@ -61,3 +57,7 @@ macro_rules! arc_async_fn {
         $crate::ArcAsyncFn::new( $crate::async_fn!(move |$a| $cb) )
     };
 }
+pub(crate) use sync_fn;
+pub(crate) use arc_sync_fn;
+pub(crate) use async_fn;
+pub(crate) use arc_async_fn;

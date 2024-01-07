@@ -1,6 +1,7 @@
 pub use std::sync::{Arc,Mutex};
 pub use futures::future::BoxFuture;
 pub extern crate futures;
+pub mod macros;
 
 pub trait SyncFnMut<T,O>: FnMut(T) -> O + Send + Sync  + 'static {}
 
@@ -64,7 +65,7 @@ impl<T,O> ArcAsyncFn<T,O> {
     }
 }
 
-#[macro_use] mod macros;
+pub(crate) use macros::{sync_fn,arc_sync_fn,async_fn,arc_async_fn};
 
 
 #[cfg(test)]
