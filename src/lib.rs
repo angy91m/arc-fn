@@ -1,5 +1,6 @@
 use std::sync::{Arc,Mutex};
 use futures::future::BoxFuture;
+pub extern crate futures;
 
 pub trait SyncFnMut<T,O>: FnMut(T) -> O + Send + Sync  + 'static {}
 
@@ -63,13 +64,75 @@ impl<T,O> ArcAsyncFn<T,O> {
     }
 }
 
+macro_rules! sync_fn {
+    ($cb:ident) => {
+        Box::new($cb)
+    };
+    ($cb:expr) => {
+        Box::new({$cb})
+    };
+    ($cb:expr) => {
+        Box::new({$cb})
+    };
+}
+macro_rules! arc_sync_fn {
+    ($cb:ident) => {
+        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+    };
+    ($cb:expr) => {
+        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+    };
+    ($cb:expr) => {
+        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+    };
+}
+macro_rules! async_fn {
+    ($cb:ident) => {
+        Box::new($cb)
+    };
+    (|$a:ident| $cb:tt) => {
+        Box::new(|$a|async move $cb.boxed())
+    };
+    (move |$a:ident| $cb:tt) => {
+        Box::new(|$a|async move $cb.boxed())
+    };
+    (|$a:tt| $cb:tt) => {
+        Box::new(|$a|async move $cb.boxed())
+    };
+    (move |$a:tt| $cb:tt) => {
+        Box::new(|$a|async move $cb.boxed())
+    };
+}
+macro_rules! arc_async_fn {
+    ($cb:ident) => {
+        $crate::ArcAsyncFn::new( $crate::async_fn!($cb) )
+    };
+    (|$a:ident| $cb:tt) => {
+        $crate::ArcAsyncFn::new( $crate::async_fn!(|$a| $cb) )
+    };
+    (move |$a:ident| $cb:tt) => {
+        $crate::ArcAsyncFn::new( $crate::async_fn!(move |$a| $cb) )
+    };
+    (|$a:tt| $cb:tt) => {
+        $crate::ArcAsyncFn::new( $crate::async_fn!(|$a| $cb) )
+    };
+    (move |$a:tt| $cb:tt) => {
+        $crate::ArcAsyncFn::new( $crate::async_fn!(move |$a| $cb) )
+    };
+}
+
+pub(crate) use sync_fn;
+pub(crate) use async_fn;
+pub(crate) use arc_sync_fn;
+pub(crate) use arc_async_fn;
+
 #[cfg(test)]
 mod tests {
-    use std::{thread::{spawn,sleep,JoinHandle},time::Duration, panic::catch_unwind};
-    use futures::{future::FutureExt,executor::block_on};
+    use std::{thread::{spawn, sleep, JoinHandle}, time::Duration, panic::catch_unwind};
+    use futures::executor::block_on;
+    use futures::future::FutureExt;
 
-    use super::ArcAsyncFn;
-
+    use super::{ArcAsyncFn,async_fn,arc_async_fn};
     fn data_producer(f: ArcAsyncFn<String,Result<(),String>>) -> JoinHandle<()> {
         let handle = spawn(||
             block_on( async move {
@@ -86,20 +149,20 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let cb = ArcAsyncFn::new(Box::new(|s| async move {
+        let cb = arc_async_fn!(|s| {
             println!("{s} This is first cb!");
             Ok(())
-        }.boxed()));
+        });
         let handle = data_producer(cb.clone());
         spawn(||block_on(async move {
             sleep(Duration::from_secs(5));
-            cb.set(Box::new(|s| async move {
+            cb.set(async_fn!(|s|{
                 println!("{s} This is the second cb!");
                 match catch_unwind(|| panic!("Error")) {
                     Ok(_) => Ok(()),
                     Err(_) => Err("Error".to_string())
                 }
-            }.boxed()));
+            }));
         }));
         let _ = handle.join();
     }
