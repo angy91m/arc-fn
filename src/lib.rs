@@ -65,7 +65,7 @@ impl<T,O> ArcAsyncFn<T,O> {
     }
 }
 
-pub(crate) use macros::{sync_fn,arc_sync_fn,async_fn,arc_async_fn};
+pub(self) use macros::{sync_fn,arc_sync_fn,async_fn,arc_async_fn};
 
 
 #[cfg(test)]
