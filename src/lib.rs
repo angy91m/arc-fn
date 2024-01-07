@@ -1,3 +1,6 @@
+#[macro_use]
+pub mod macros;
+
 pub use std::sync::{Arc,Mutex};
 pub use futures::future::BoxFuture;
 pub extern crate futures;
@@ -63,9 +66,6 @@ impl<T,O> ArcAsyncFn<T,O> {
         (f)(a)
     }
 }
-
-#[macro_use]
-pub mod macros;
 
 
 #[cfg(test)]
