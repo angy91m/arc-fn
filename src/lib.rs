@@ -1,7 +1,6 @@
 pub use std::sync::{Arc,Mutex};
 pub use futures::future::BoxFuture;
 pub extern crate futures;
-pub mod macros;
 
 pub trait SyncFnMut<T,O>: FnMut(T) -> O + Send + Sync  + 'static {}
 
@@ -64,8 +63,7 @@ impl<T,O> ArcAsyncFn<T,O> {
         (f)(a)
     }
 }
-
-pub(self) use macros::{sync_fn,arc_sync_fn,async_fn,arc_async_fn};
+pub mod macros;
 
 
 #[cfg(test)]
@@ -74,7 +72,7 @@ mod tests {
     use futures::executor::block_on;
     use futures::future::FutureExt;
 
-    use super::{ArcAsyncFn,async_fn,arc_async_fn};
+    use super::{ArcAsyncFn,macros::{async_fn,arc_async_fn}};
     fn data_producer(f: ArcAsyncFn<String,Result<(),String>>) -> JoinHandle<()> {
         let handle = spawn(||
             block_on( async move {

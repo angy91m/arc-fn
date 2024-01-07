@@ -12,13 +12,13 @@ macro_rules! sync_fn {
 
 macro_rules! arc_sync_fn {
     ($cb:ident) => {
-        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+        $crate::ArcSyncFn::new($crate::macros::sync_fn!($cb))
     };
     ($cb:expr) => {
-        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+        $crate::ArcSyncFn::new($crate::macros::sync_fn!($cb))
     };
     ($cb:expr) => {
-        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+        $crate::ArcSyncFn::new($crate::macros::sync_fn!($cb))
     };
 }
 
@@ -42,19 +42,19 @@ macro_rules! async_fn {
 
 macro_rules! arc_async_fn {
     ($cb:ident) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!($cb) )
+        $crate::ArcAsyncFn::new( $crate::macros::async_fn!($cb) )
     };
     (|$a:ident| $cb:tt) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!(|$a| $cb) )
+        $crate::ArcAsyncFn::new( $crate::macros::async_fn!(|$a| $cb) )
     };
     (move |$a:ident| $cb:tt) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!(move |$a| $cb) )
+        $crate::ArcAsyncFn::new( $crate::macros::async_fn!(move |$a| $cb) )
     };
     (|$a:tt| $cb:tt) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!(|$a| $cb) )
+        $crate::ArcAsyncFn::new( $crate::macros::async_fn!(|$a| $cb) )
     };
     (move |$a:tt| $cb:tt) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!(move |$a| $cb) )
+        $crate::ArcAsyncFn::new( $crate::macros::async_fn!(move |$a| $cb) )
     };
 }
 pub(crate) use sync_fn;
