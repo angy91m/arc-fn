@@ -78,13 +78,13 @@ macro_rules! sync_fn {
 
 macro_rules! arc_sync_fn {
     ($cb:ident) => {
-        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+        arc_fn::ArcSyncFn::new( sync_fn!($cb))
     };
     ($cb:expr) => {
-        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+        arc_fn::ArcSyncFn::new( sync_fn!($cb))
     };
     ($cb:expr) => {
-        $crate::ArcSyncFn::new($crate::sync_fn!($cb))
+        arc_fn::ArcSyncFn::new( sync_fn!($cb))
     };
 }
 
@@ -96,31 +96,31 @@ macro_rules! async_fn {
         Box::new(|$a|async move $cb.boxed())
     };
     (move |$a:ident| $cb:tt) => {
-        Box::new(|$a|async move $cb.boxed())
+        Box::new(move|$a|async move $cb.boxed())
     };
     (|$a:tt| $cb:tt) => {
         Box::new(|$a|async move $cb.boxed())
     };
     (move |$a:tt| $cb:tt) => {
-        Box::new(|$a|async move $cb.boxed())
+        Box::new(move|$a|async move $cb.boxed())
     };
 }
 
 macro_rules! arc_async_fn {
     ($cb:ident) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!($cb) )
+        ArcAsyncFn::new( Box::new($cb) )
     };
     (|$a:ident| $cb:tt) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!(|$a| $cb) )
+        ArcAsyncFn::new( Box::new(|$a|async move $cb.boxed()) )
     };
     (move |$a:ident| $cb:tt) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!(move |$a| $cb) )
+        ArcAsyncFn::new( Box::new(move|$a|async move $cb.boxed()) )
     };
     (|$a:tt| $cb:tt) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!(|$a| $cb) )
+        ArcAsyncFn::new( Box::new(|$a|async move $cb.boxed()) )
     };
     (move |$a:tt| $cb:tt) => {
-        $crate::ArcAsyncFn::new( $crate::async_fn!(move |$a| $cb) )
+        ArcAsyncFn::new( Box::new(move|$a|async move $cb.boxed()) )
     };
 }
 pub(crate) use sync_fn;
@@ -135,7 +135,8 @@ mod tests {
     use futures::executor::block_on;
     use futures::future::FutureExt;
 
-    use super::{ArcAsyncFn,async_fn,arc_async_fn};
+    use super::ArcAsyncFn;
+    
     fn data_producer(f: ArcAsyncFn<String,Result<(),String>>) -> JoinHandle<()> {
         let handle = spawn(||
             block_on( async move {
