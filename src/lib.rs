@@ -78,13 +78,13 @@ macro_rules! sync_fn {
 
 macro_rules! arc_sync_fn {
     ($cb:ident) => {
-        arc_fn::ArcSyncFn::new( sync_fn!($cb))
+        ArcSyncFn::new( sync_fn!($cb))
     };
     ($cb:expr) => {
-        arc_fn::ArcSyncFn::new( sync_fn!($cb))
+        ArcSyncFn::new( sync_fn!($cb))
     };
     ($cb:expr) => {
-        arc_fn::ArcSyncFn::new( sync_fn!($cb))
+        ArcSyncFn::new( sync_fn!($cb))
     };
 }
 
