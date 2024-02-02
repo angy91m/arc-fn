@@ -1,6 +1,5 @@
-pub use std::sync::{Arc,Mutex};
-pub use futures::future::BoxFuture;
-pub extern crate futures;
+use std::sync::{Arc,Mutex};
+use futures::future::BoxFuture;
 
 pub trait SyncFnMut<T,O>: FnMut(T) -> O + Send + Sync  + 'static {}
 
@@ -18,13 +17,9 @@ pub trait AsyncFn<T,O>: AsyncFnMut<T,O> + Clone {}
 impl<T,O,F> AsyncFn<T,O> for F
 where F: AsyncFnMut<T,O> + Clone {}
 
+#[derive(Clone)]
 pub struct ArcSyncFn<T,O> {
     v: Arc<Mutex<Box<dyn SyncFnMut<T,O>>>>
-}
-impl<T,O> Clone for ArcSyncFn<T,O> {
-    fn clone(&self) -> Self {
-        Self {v: self.v.clone() }
-    }
 }
 
 impl<T,O> ArcSyncFn<T,O> {
@@ -41,13 +36,9 @@ impl<T,O> ArcSyncFn<T,O> {
     }
 }
 
+#[derive(Clone)]
 pub struct ArcAsyncFn<T,O> {
     v: Arc<Mutex<Box<dyn AsyncFnMut<T,O>>>>
-}
-impl<T,O> Clone for ArcAsyncFn<T,O> {
-    fn clone(&self) -> Self {
-        Self {v: self.v.clone() }
-    }
 }
 
 impl<T,O> ArcAsyncFn<T,O> {
@@ -92,36 +83,60 @@ macro_rules! async_fn {
     ($cb:ident) => {
         Box::new($cb)
     };
-    (|$a:ident| $cb:tt) => {
+    (|$a:ident| $cb:tt) => {{
+        use futures::future::FutureExt;
         Box::new(|$a|async move $cb.boxed())
-    };
-    (move |$a:ident| $cb:tt) => {
+    }};
+    (|$a:ident: $t:ty| $cb:tt) => {{
+        use futures::future::FutureExt;
+        Box::new(|$a: $t|async move $cb.boxed())
+    }};
+    (move |$a:ident| $cb:tt) => {{
+        use futures::future::FutureExt;
         Box::new(move|$a|async move $cb.boxed())
-    };
-    (|$a:tt| $cb:tt) => {
+    }};
+    (move |$a:ident: $t:ty| $cb:tt) => {{
+        use futures::future::FutureExt;
+        Box::new(move|$a: $t|async move $cb.boxed())
+    }};
+    (|$a:tt| $cb:tt) => {{
+        use futures::future::FutureExt;
         Box::new(|$a|async move $cb.boxed())
-    };
-    (move |$a:tt| $cb:tt) => {
+    }};
+    (move |$a:tt| $cb:tt) => {{
+        use futures::future::FutureExt;
         Box::new(move|$a|async move $cb.boxed())
-    };
+    }};
 }
 
 macro_rules! arc_async_fn {
     ($cb:ident) => {
         ArcAsyncFn::new( Box::new($cb) )
     };
-    (|$a:ident| $cb:tt) => {
+    (|$a:ident| $cb:tt) => {{
+        use futures::future::FutureExt;
         ArcAsyncFn::new( Box::new(|$a|async move $cb.boxed()) )
-    };
-    (move |$a:ident| $cb:tt) => {
+    }};
+    (|$a:ident: $t:ty| $cb:tt) => {{
+        use futures::future::FutureExt;
+        ArcAsyncFn::new( Box::new(|$a: $t|async move $cb.boxed()) )
+    }};
+    (move |$a:ident| $cb:tt) => {{
+        use futures::future::FutureExt;
         ArcAsyncFn::new( Box::new(move|$a|async move $cb.boxed()) )
-    };
-    (|$a:tt| $cb:tt) => {
+    }};
+    (move |$a:ident: $t:ty| $cb:tt) => {{
+        use futures::future::FutureExt;
+        ArcAsyncFn::new( Box::new(move|$a: $t|async move $cb.boxed()) )
+    }};
+    (|$a:tt| $cb:tt) => {{
+        use futures::future::FutureExt;
         ArcAsyncFn::new( Box::new(|$a|async move $cb.boxed()) )
-    };
-    (move |$a:tt| $cb:tt) => {
+    }};
+    (move |$a:tt| $cb:tt) => {{
+        use futures::future::FutureExt;
         ArcAsyncFn::new( Box::new(move|$a|async move $cb.boxed()) )
-    };
+    }};
 }
 pub(crate) use sync_fn;
 pub(crate) use arc_sync_fn;
@@ -133,7 +148,6 @@ pub(crate) use arc_async_fn;
 mod tests {
     use std::{thread::{spawn, sleep, JoinHandle}, time::Duration, panic::catch_unwind};
     use futures::executor::block_on;
-    use futures::future::FutureExt;
 
     use super::ArcAsyncFn;
     
@@ -153,14 +167,14 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let cb = arc_async_fn!(|s| {
+        let cb = arc_async_fn!(|s|{
             println!("{s} This is first cb!");
             Ok(())
         });
         let handle = data_producer(cb.clone());
         spawn(||block_on(async move {
             sleep(Duration::from_secs(5));
-            cb.set(async_fn!(|s|{
+            cb.set(async_fn!(|s| {
                 println!("{s} This is the second cb!");
                 match catch_unwind(|| panic!("Error")) {
                     Ok(_) => Ok(()),
