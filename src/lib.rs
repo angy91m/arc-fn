@@ -55,6 +55,7 @@ impl<T,O> ArcAsyncFn<T,O> {
     }
 }
 
+#[macro_export]
 macro_rules! sync_fn {
     ($cb:ident) => {
         Box::new($cb)
@@ -67,6 +68,7 @@ macro_rules! sync_fn {
     };
 }
 
+#[macro_export]
 macro_rules! arc_sync_fn {
     ($cb:ident) => {
         ArcSyncFn::new( sync_fn!($cb))
@@ -79,6 +81,7 @@ macro_rules! arc_sync_fn {
     };
 }
 
+#[macro_export]
 macro_rules! async_fn {
     ($cb:ident) => {
         Box::new($cb)
@@ -109,6 +112,7 @@ macro_rules! async_fn {
     }};
 }
 
+#[macro_export]
 macro_rules! arc_async_fn {
     ($cb:ident) => {
         ArcAsyncFn::new( Box::new($cb) )
@@ -138,10 +142,6 @@ macro_rules! arc_async_fn {
         ArcAsyncFn::new( Box::new(move|$a|async move $cb.boxed()) )
     }};
 }
-pub(crate) use sync_fn;
-pub(crate) use arc_sync_fn;
-pub(crate) use async_fn;
-pub(crate) use arc_async_fn;
 
 
 #[cfg(test)]
